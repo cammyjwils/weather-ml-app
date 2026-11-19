@@ -9,12 +9,12 @@ class TestAppSmoke(unittest.TestCase):
 	# Complete the function below to test a success in running the application
 	def test_prediction_route_success(self):
 		response = self.client.get('/')
-		
+		self.assertEqual(response.status_code, 200)
 
 	# Complete the function below to test a form is rendered
 	def test_get_form(self):
 		response = self.client.get('/')
-		
+		self.assertIn('<form', response.data.decode('utf-8').lower())
  
 if __name__ == '__main__':
 	unittest.main()
