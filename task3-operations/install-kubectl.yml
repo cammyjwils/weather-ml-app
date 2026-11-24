@@ -1,0 +1,32 @@
+---
+- name: Install kubectl on Production Server
+  hosts: localhost
+  connection: local
+  become: yes
+
+  tasks:
+    - name: Download kubectl binary
+      get_url:
+        url: https://dl.k8s.io/release/stable.txt
+        dest: /tmp/kubectl-version
+        mode: '0644'
+
+    - name: Read kubectl version
+      command: cat /tmp/kubectl-version
+      register: kubectl_version
+      changed_when: false
+
+    - name: Download kubectl
+      get_url:
+        url: "https://dl.k8s.io/release/{{ kubectl_version.stdout }}/bin/linux/amd64/kubectl"
+        dest: /usr/local/bin/kubectl
+        mode: '0755'
+
+    - name: Verify kubectl installation
+      command: kubectl version --client
+      register: kubectl_check
+      changed_when: false
+
+    - name: Display kubectl version
+      debug:
+        var: kubectl_check.stdout

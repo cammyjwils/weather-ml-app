@@ -1,0 +1,30 @@
+---
+- name: Install and Start Minikube on Production Server
+  hosts: localhost
+  connection: local
+  become: yes
+
+  tasks:
+    - name: Download Minikube binary
+      get_url:
+        url: https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+        dest: /usr/local/bin/minikube
+        mode: '0755'
+
+ 
+
+    - name: Start Minikube
+      become: false
+      command: minikube start --driver=docker
+      register: minikube_start
+      changed_when: "'Done!' in minikube_start.stdout"
+
+    - name: Verify Minikube status
+      become: false
+      command: minikube status
+      register: minikube_status
+      changed_when: false
+
+    - name: Display Minikube status
+      debug:
+        var: minikube_status.stdout_lines
