@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: weather-ml-app
+  namespace: default
+  labels:
+    app: weather-ml-app
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1          # start one extra new pod during an update
+      maxUnavailable: 0    # never drop below the desired number of running pods
+  selector:
+    matchLabels:
+      app: weather-ml-app
+  template:
+    metadata:
+      labels:
+        app: weather-ml-app
+    spec:
+      containers:
+        - name: weather-ml-app
+          # The CD workflow replaces this tag with the version it has just built
+          image: pszmid300/weather-ml-app:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+          readinessProbe:    # only send traffic to a pod once Flask is answering
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 5

@@ -1,0 +1,8 @@
+.git
+.idea
+.github
+**/__pycache__
+*.pyc
+task3-operations
+k8s
+.DS_Store

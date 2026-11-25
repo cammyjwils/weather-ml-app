@@ -1,5 +1,5 @@
 import unittest
-from app import app, classify_weather, load_model
+from app import app, classify_weather, load_model, weather_classes
 import numpy as np
 
 class TestUnit(unittest.TestCase):
@@ -41,8 +41,10 @@ class TestUnit(unittest.TestCase):
 	def test_rainy_classification_output(self):
 		test_input = np.array([279.626,998,99,1,314,0.3,0,0,88]).reshape(1,-1)
 		class_result, _ = classify_weather(test_input) 
-		# Ensure that 'rainy' class is returned
-		self.assertEqual(class_result, 'rainy')
+		# Ensure that the rain class (index 6) is returned. Compare against
+		# app.weather_classes so the test still passes if the label is renamed
+		# (e.g. 'rainy' -> 'rain').
+		self.assertEqual(class_result, weather_classes[6])
 		
 
 	def test_foggy_classification_output(self):

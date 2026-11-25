@@ -1,5 +1,5 @@
 import unittest
-from app import app  # Import your Flask app instance
+from app import app, weather_classes  # Import your Flask app instance and its class labels
 
 
 class TestModelAppIntegration(unittest.TestCase):
@@ -32,10 +32,8 @@ class TestModelAppIntegration(unittest.TestCase):
 		# Ensure that the result page should include a prediction time
 		self.assertIn('prediction time', html_text)
 
-		valid_classes = [
-			'clear', 'cloudy', 'drizzly', 'foggy', 'hazey',
-			'misty', 'rainy', 'smokey', 'thunderstorm'
-		]
+		# Use the app's own labels so renaming a class doesn't break the test
+		valid_classes = weather_classes
 		found = any(weather in html_text for weather in valid_classes)
 		
 		# Ensure that classification is in valid classes, provide an error message if not.
