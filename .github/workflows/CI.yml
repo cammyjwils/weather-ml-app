@@ -12,12 +12,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      - name: Set up Python 3.9 (same version as the Docker image)
-        uses: actions/setup-python@v5
+      - name: Set up Python 3.12 (same version as the Docker image)
+        uses: actions/setup-python@v6
         with:
-          python-version: '3.9'
+          python-version: '3.12'
 
       # (b) Install Flask and the dependencies in requirements.txt
       - name: Install Flask and dependencies
