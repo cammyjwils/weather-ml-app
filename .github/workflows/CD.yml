@@ -1,0 +1,55 @@
+name: CD
+
+# Start when the CI workflow finishes on main. The job below only runs if CI passed.
+on:
+  workflow_run:
+    workflows: [ "CI" ]
+    types: [ completed ]
+    branches: [ main ]
+
+jobs:
+  deploy:
+    # (g) Only deploy builds that passed
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # Runs on the self-hosted runner installed on the Production Server
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout the commit that CI tested
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Check the Kubernetes cluster is reachable
+        run: |
+          minikube status
+          kubectl get nodes
+
+      # (h) Deploy from the YAML files in k8s/. Because deployment.yaml uses a
+      # RollingUpdate strategy (maxUnavailable: 0) with a readiness probe, old pods
+      # are only removed once new ones are ready, so the service is never down.
+      - name: Deploy to Kubernetes from YAML (rolling update)
+        run: |
+          BEFORE=$(kubectl get deployment weather-ml-app -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null || echo none)
+          kubectl apply -f k8s/deployment.yaml -f k8s/service.yaml
+          AFTER=$(kubectl get deployment weather-ml-app -o jsonpath='{.spec.template.spec.containers[0].image}')
+          echo "Image before: $BEFORE"
+          echo "Image after:  $AFTER"
+          # If the version tag did not change, CI has still pushed a new image under the
+          # same tag, so restart the pods (one at a time) to pull it.
+          if [ "$BEFORE" = "$AFTER" ]; then
+            kubectl rollout restart deployment/weather-ml-app
+          fi
+
+      - name: Wait for the rolling update to finish
+        run: kubectl rollout status deployment/weather-ml-app --timeout=300s
+
+      - name: Show the deployed pods and service
+        run: |
+          kubectl get deployment weather-ml-app -o wide
+          kubectl get pods -l app=weather-ml-app -o wide
+          kubectl get service weather-ml-app-service
+
+      - name: Roll back if the update failed
+        if: failure()
+        run: kubectl rollout undo deployment/weather-ml-app

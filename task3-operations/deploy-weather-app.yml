@@ -1,43 +1,34 @@
 ---
+# Task 3(c): Deploy the image from DockerHub to Kubernetes
+# Uses the same k8s/deployment.yaml file that the CD pipeline applies.
 - name: Deploy Weather ML App to Kubernetes
   hosts: localhost
   connection: local
   become: false
 
   tasks:
-    - name: Create weather app deployment
+    - name: Install the Python Kubernetes client used by the kubernetes.core modules
+      become: true
+      apt:
+        name: python3-kubernetes
+        state: present
+        update_cache: yes
+
+    - name: Create the weather app Deployment from k8s/deployment.yaml
       kubernetes.core.k8s:
         state: present
-        definition:
-          apiVersion: apps/v1
-          kind: Deployment
-          metadata:
-            name: weather-ml-app
-            namespace: default
-          spec:
-            replicas: 2
-            strategy:
-              type: RollingUpdate
-              rollingUpdate:
-                maxSurge: 1
-                maxUnavailable: 0
-            selector:
-              matchLabels:
-                app: weather-ml-app
-            template:
-              metadata:
-                labels:
-                  app: weather-ml-app
-              spec:
-                containers:
-                  - name: weather-ml-app
-                    image: pszmid300/weather-ml-app:latest
-                    imagePullPolicy: Always
-                    ports:
-                      - containerPort: 5000
-                    readinessProbe:
-                      httpGet:
-                        path: /
-                        port: 5000
-                      initialDelaySeconds: 5
-                      periodSeconds: 5
+        src: "{{ playbook_dir }}/../k8s/deployment.yaml"
+        wait: yes
+        wait_condition:
+          type: Available
+          status: "True"
+        wait_timeout: 300
+
+    - name: Get the weather app pods
+      command: kubectl get pods -l app=weather-ml-app -o wide
+      register: pods
+      changed_when: false
+
+    - name: Display the weather app pods
+      debug:
+        var: pods.stdout_lines

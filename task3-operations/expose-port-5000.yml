@@ -1,0 +1,45 @@
+---
+# Makes the app reachable in a browser at http://<Production Server public IP>:5000
+# Minikube runs inside Docker on a private network, so the NodePort (30080) is only
+# reachable from the server itself. This forwards the server's port 5000 to the
+# Minikube NodePort, which load-balances across all pods, so it keeps working during
+# rolling updates.
+- name: Forward port 5000 on the Production Server to the Kubernetes service
+  hosts: localhost
+  connection: local
+  become: yes
+
+  tasks:
+    - name: Install socat
+      apt:
+        name: socat
+        state: present
+        update_cache: yes
+
+    - name: Get the Minikube IP address
+      become: false
+      command: minikube ip
+      register: minikube_ip
+      changed_when: false
+
+    - name: Create a systemd service that forwards port 5000 to the NodePort
+      copy:
+        dest: /etc/systemd/system/weather-port-forward.service
+        content: |
+          [Unit]
+          Description=Forward port 5000 to the weather-ml-app Kubernetes NodePort
+          After=network.target docker.service
+
+          [Service]
+          ExecStart=/usr/bin/socat TCP-LISTEN:5000,fork,reuseaddr TCP:{{ minikube_ip.stdout }}:30080
+          Restart=always
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Start and enable the port forward
+      systemd:
+        name: weather-port-forward
+        state: restarted
+        enabled: yes
+        daemon_reload: yes

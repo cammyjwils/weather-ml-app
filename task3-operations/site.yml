@@ -1,0 +1,9 @@
+---
+# Runs every Task 3 playbook in order:
+#   ansible-playbook site.yml
+- import_playbook: install-kubectl.yml
+- import_playbook: install-minikube.yml
+- import_playbook: deploy-weather-app.yml
+- import_playbook: create-weather-service.yml
+- import_playbook: scale-weather-app.yml
+- import_playbook: expose-port-5000.yml

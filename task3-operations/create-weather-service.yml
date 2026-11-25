@@ -1,25 +1,22 @@
 ---
+# Task 3(d): Create a Service for the application
+# NodePort service: port 5000 inside the cluster, reachable on <minikube ip>:30080
 - name: Create Weather ML App Kubernetes Service
   hosts: localhost
   connection: local
   become: false
 
   tasks:
-    - name: Expose weather app using NodePort service
+    - name: Expose the weather app using the NodePort service in k8s/service.yaml
       kubernetes.core.k8s:
         state: present
-        definition:
-          apiVersion: v1
-          kind: Service
-          metadata:
-            name: weather-ml-app-service
-            namespace: default
-          spec:
-            type: NodePort
-            selector:
-              app: weather-ml-app
-            ports:
-              - protocol: TCP
-                port: 5000
-                targetPort: 5000
-                nodePort: 30080
+        src: "{{ playbook_dir }}/../k8s/service.yaml"
+
+    - name: Get the service details
+      command: kubectl get service weather-ml-app-service
+      register: svc
+      changed_when: false
+
+    - name: Display the service details
+      debug:
+        var: svc.stdout_lines

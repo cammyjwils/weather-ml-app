@@ -6,7 +6,7 @@ metadata:
   labels:
     app: weather-ml-app
 spec:
-  replicas: 2
+  replicas: 3              # several pods so one can be replaced while the others serve traffic
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -22,8 +22,9 @@ spec:
     spec:
       containers:
         - name: weather-ml-app
-          # The CD workflow replaces this tag with the version it has just built
-          image: pszmid300/weather-ml-app:latest
+          # Image name and version. CI builds and pushes this exact tag, and CD deploys it.
+          # To release a new version, change the tag here (e.g. v1 -> v2) and push.
+          image: cammyjwils/weather-ml-app:v1
           imagePullPolicy: Always
           ports:
             - containerPort: 5000

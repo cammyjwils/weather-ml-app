@@ -1,4 +1,6 @@
 ---
+# Task 3(b): Install and start Minikube on the Production Server
+# Needs Docker installed first, with the ubuntu user in the docker group.
 - name: Install and Start Minikube on Production Server
   hosts: localhost
   connection: local
@@ -11,9 +13,7 @@
         dest: /usr/local/bin/minikube
         mode: '0755'
 
- 
-
-    - name: Start Minikube
+    - name: Start Minikube using the Docker driver
       become: false
       command: minikube start --driver=docker
       register: minikube_start

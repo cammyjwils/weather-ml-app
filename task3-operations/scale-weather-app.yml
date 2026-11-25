@@ -1,0 +1,31 @@
+---
+# Task 3(e): Scale the deployment so Rolling Updates can be done without downtime.
+# With 3 replicas, maxSurge 1 and maxUnavailable 0, Kubernetes replaces one pod at a
+# time while the other pods keep serving requests.
+- name: Scale Weather ML App for Rolling Updates
+  hosts: localhost
+  connection: local
+  become: false
+
+  vars:
+    replica_count: 3
+
+  tasks:
+    - name: Scale the weather app deployment to {{ replica_count }} replicas
+      kubernetes.core.k8s_scale:
+        api_version: apps/v1
+        kind: Deployment
+        name: weather-ml-app
+        namespace: default
+        replicas: "{{ replica_count }}"
+        wait: yes
+        wait_timeout: 300
+
+    - name: Get the deployment status
+      command: kubectl get deployment weather-ml-app
+      register: deploy
+      changed_when: false
+
+    - name: Display the deployment status
+      debug:
+        var: deploy.stdout_lines
